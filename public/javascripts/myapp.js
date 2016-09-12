@@ -4,29 +4,48 @@ var app = angular.module('myroutesApp', []);
 app.controller('MainCtrl', ['$scope', 'locations', function ($scope, locations) {
 	$scope.header = 'Find your route';
 	$scope.subHeader = '(Click on the map to pin your locations)';
-	var mapOptions = {
-		zoom: 15,
-		center: new google.maps.LatLng(12.9715987,77.5945627),
-		mapTypeId: google.maps.MapTypeId.ROADMAP
-	}
 	
-	$scope.map = new google.maps.Map(document.getElementById('map'), mapOptions);
-	$scope.locations = locations.locations;
-	$scope.locationsLen = locations.locations.length;
-
-	var labelIndex = 0;
-	var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-	var placeMarker = function(location, map) {
-		var marker = new google.maps.Marker({
-			position: location,
-			label: labels[labelIndex],
-			map: map
-		});
-		$scope.locations.push({lat: marker.position.lat(), lng: marker.position.lng()});
+	$scope.initialize = function() {
+        $scope.mapOptions = {
+			zoom: 15,
+			center: new google.maps.LatLng(12.9715987,77.5945627),
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		}
+		
+		$scope.map = new google.maps.Map(document.getElementById('map'), $scope.mapOptions);
+		$scope.locations = locations.locations;
 		$scope.locationsLen = locations.locations.length;
-	};
-    
+
+		var labelIndex = 0;
+		var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+		var placeMarker = function(location, map) {
+			var marker = new google.maps.Marker({
+				position: location,
+				label: labels[labelIndex],
+				map: map
+			});
+			$scope.locations.push({lat: marker.position.lat(), lng: marker.position.lng()});
+			$scope.locationsLen = locations.locations.length;
+		};
+
+		google.maps.event.addListener($scope.map, 'click', function(event) {
+			$scope.$apply(function(){
+				placeMarker(event.latLng, $scope.map);
+				labelIndex++;
+			});
+		});
+    }
+    $scope.loadScript = function() {
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDBLNuhxA9fC0H3YC6oVdTsvisdA1zwcX4&callback=app.controller&sensor=false&language=en';
+        document.body.appendChild(script);
+        setTimeout(function() {
+            $scope.initialize();
+        }, 500);
+    }
+
 	$scope.getRoute = function() {
 		var directionsDisplay = new google.maps.DirectionsRenderer();
 		directionsDisplay.setMap($scope.map);
@@ -84,13 +103,6 @@ app.controller('MainCtrl', ['$scope', 'locations', function ($scope, locations) 
 	        }
 	    });
 	};
-
-	google.maps.event.addListener($scope.map, 'click', function(event) {
-		$scope.$apply(function(){
-			placeMarker(event.latLng, $scope.map);
-			labelIndex++;
-		});
-	});
 }]);
 
 app.factory('locations', [function() {
